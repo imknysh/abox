@@ -51,10 +51,6 @@ rm /tmp/cloud-provider-kind.tar.gz
 nohup /tmp/cloud-provider-kind > /tmp/cloud-provider-kind.log 2>&1 &
 log "cloud-provider-kind started (pid $!)"
 
-# Apply GatewayClass + Gateway
-log "Applying gatewayapi/Gateway.yaml..."
-kubectl apply --kubeconfig /home/codespace/.kube/config -f flux-config/Gateway.yaml
-
 
 helm upgrade -i kagent-crd oci://ghcr.io/kagent-dev/kagent/helm/kagent-crds --create-namespace -n kagent
 helm upgrade -i kagent oci://ghcr.io/kagent-dev/kagent/helm/kagent --create-namespace  -n kagent \
