@@ -18,25 +18,44 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Flux CLI
         uses: fluxcd/flux2/action@main
 
       - name: Login to GHCR
-        run: echo "${{ secrets.GITHUB_TOKEN }}" | flux registry login ghcr.io -u ${{ github.actor }} --password-stdin
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Set version
+      - name: Calculate version
         id: version
         run: |
-          if [[ "${{ github.ref_type }}" == "tag" ]]; then
-            echo "tag=${GITHUB_REF_NAME#v}" >> $GITHUB_OUTPUT
-          else
-            echo "tag=0.0.0-${{ github.sha }}" >> $GITHUB_OUTPUT
+          TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          COMMITS=$(git rev-list ${TAG}..HEAD --count)
+          SEMVER="${TAG#v}"
+          if [[ "$COMMITS" -gt 0 ]]; then
+            SEMVER="${SEMVER}-${COMMITS}-g$(git rev-parse --short HEAD)"
           fi
+          echo "tag=${SEMVER}" >> $GITHUB_OUTPUT
+          echo "tag_ts=${SEMVER}-$(date +%s)" >> $GITHUB_OUTPUT
 
       - name: Push OCI artifact
+        id: push
         run: |
-          flux push artifact oci://ghcr.io/${{ github.repository }}/flux-config:${{ steps.version.outputs.tag }} \
+          digest=$(flux push artifact oci://ghcr.io/${{ github.repository }}/flux-config:${{ steps.version.outputs.tag }} \
             --path="./flux-config" \
             --source="${{ github.repositoryUrl }}" \
-            --revision="${{ github.ref_name }}@sha1:${{ github.sha }}"
+            --revision="${{ github.ref_name }}@sha1:${{ github.sha }}" \
+            --output json | jq -r '.digest')
+          echo "digest=${digest}" >> $GITHUB_OUTPUT
+
+      - name: Tag artifact
+        run: |
+          flux tag artifact \
+            oci://ghcr.io/${{ github.repository }}/flux-config:${{ steps.version.outputs.tag }}@${{ steps.push.outputs.digest }} \
+            --tag ${{ steps.version.outputs.tag_ts }} \
+            --tag latest
