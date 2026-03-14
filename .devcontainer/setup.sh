@@ -70,8 +70,5 @@ for i in $(seq 1 30); do
   sleep 5
 done
 
-# Install preview ResourceSet manifests
-log "Applying preview/..."
-kubectl apply -f preview/
 
 log "=== setup complete ==="
