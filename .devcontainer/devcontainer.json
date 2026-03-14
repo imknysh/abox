@@ -16,8 +16,7 @@
   },
 
   "remoteEnv": {
-    "TF_VAR_github_token": "${localEnv:GITHUB_TOKEN}",
-    "GITHUB_TOKEN": "${localEnv:GITHUB_TOKEN}"
+    "TF_VAR_github_token": "${localEnv:GITHUB_TOKEN}"
   },
 
   "postCreateCommand": "bash .devcontainer/setup.sh 2>&1 | tee /tmp/setup.log",
