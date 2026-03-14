@@ -84,15 +84,31 @@ resource "kubectl_manifest" "rset" {
       - apiVersion: kustomize.toolkit.fluxcd.io/v1
         kind: Kustomization
         metadata:
-          name: releases
+          name: releases-crds
           namespace: flux-system
         spec:
           interval: 5m
           sourceRef:
             kind: OCIRepository
             name: releases
+          path: ./crds
+          prune: true
+          wait: true
+      - apiVersion: kustomize.toolkit.fluxcd.io/v1
+        kind: Kustomization
+        metadata:
+          name: releases
+          namespace: flux-system
+        spec:
+          interval: 5m
+          dependsOn:
+            - name: releases-crds
+          sourceRef:
+            kind: OCIRepository
+            name: releases
           path: ./
           prune: true
           wait: true
+          retryInterval: 30s
   YAML
 }
