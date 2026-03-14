@@ -51,10 +51,6 @@ rm /tmp/cloud-provider-kind.tar.gz
 nohup cloud-provider-kind > /tmp/cloud-provider-kind.log 2>&1 &
 log "cloud-provider-kind started (pid $!)"
 
-# Install Gateway API CRDs
-log "Installing Gateway API CRDs..."
-kubectl apply --kubeconfig /home/codespace/.kube/config --server-side -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.4.0/standard-install.yaml
-
 # Apply GatewayClass + Gateway
 log "Applying gatewayapi/Gateway.yaml..."
 kubectl apply --kubeconfig /home/codespace/.kube/config -f gatewayapi/Gateway.yaml
