@@ -24,7 +24,7 @@ down:
 	@cd bootstrap && tofu destroy -auto-approve
 
 push:
-	@git fetch a-box --tags
+	@git fetch a-box --tags --force
 	$(eval TAG=$(shell git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0"))
 	$(eval MAJOR=$(shell echo $(TAG) | cut -d. -f1))
 	$(eval MINOR=$(shell echo $(TAG) | cut -d. -f2))
