@@ -1,122 +1,82 @@
-# Application Setup Guide
+# a-box
 
-This guide explains how to set up and deploy the Ephemeral Environments using OpenTofu, Kubernetes.
+Ephemeral PR preview environments on a local Kubernetes cluster using KinD, Flux CD, and Agentgateway.
 
-## Prerequisites
+## Stack
 
-- Linux/Unix-based system
-- curl
-- wget
-- Kubernetes cluster (kind)
-- Git
+- **KinD** — local Kubernetes cluster (1 control-plane + 2 workers)
+- **Flux CD 2.x** — GitOps operator (Flux Operator + FluxInstance)
+- **Agentgateway v2.2.1** — Kubernetes Gateway API implementation
+- **cloud-provider-kind** — LoadBalancer support for KinD
 
-## Installation Steps
+## Quickstart (GitHub Codespaces)
 
-### 1. Install Required Tools
+1. Fork or open this repo in a Codespace
+2. Set the `GITHUB_TOKEN` secret in your [Codespace secrets](https://github.com/settings/codespaces)
+3. Create codespace — `postCreateCommand` runs `.devcontainer/setup.sh` automatically
 
-First, install OpenTofu and K9s:
+```bash
+gh codespace create --repo den-vasyliev/a-box --machine basicLinux32gb
+```
+
+The setup script installs OpenTofu and K9s, runs `tofu apply` to provision the KinD cluster, bootstraps Flux, and applies the gateway manifests.
+
+## Manual Setup
 
 ```bash
 # Install OpenTofu
-curl -fsSL https://get.opentofu.org/install-opentofu.sh | sh -s -- --install-method standalone 
+curl -fsSL https://get.opentofu.org/install-opentofu.sh | sh -s -- --install-method standalone
 
-# Install K9S for cluster management
+# Install K9s
 curl -sS https://webi.sh/k9s | sh
-```
 
-### 2. Setup Aliases
-
-Add these helpful aliases to your shell configuration:
-
-```bash
-alias kk="EDITOR='code --wait' k9s"
-alias tf=tofu
-alias k=kubectl
-```
-
-### 3. Initialize and Apply Infrastructure
-
-```bash
-# Navigate to bootstrap directory
+# Provision cluster + bootstrap Flux
 cd bootstrap
-
-# Initialize OpenTofu
+export TF_VAR_github_token="<your-token>"
 tofu init
-
-# Set up GitHub authentication
-# You will be prompted to enter your GitHub token securely
-export TF_VAR_github_token="$GITHUB_TOKEN"
-
-# Apply the infrastructure configuration
 tofu apply
 ```
 
-### 4. Deploy Gateway API
+## Directory Layout
 
-```bash
-# Install Gateway API components
-k apply -f ../gatewayapi
+| Directory | Purpose |
+|-----------|---------|
+| `bootstrap/` | OpenTofu: KinD cluster + Flux Operator + Agentgateway manifests |
+| `gatewayapi/` | Flux HelmReleases for Gateway API CRDs + Agentgateway + GatewayClass |
+| `release/` | HelmRelease for production app |
+| `preview/` | Flux ResourceSet manifests for dynamic PR environments |
+| `.devcontainer/` | GitHub Codespaces configuration |
 
-# Verify services
-k get svc
+## How it works
+
+```
+tofu apply
+  → KinD cluster created
+  → Flux Operator + FluxInstance bootstrapped (syncs this repo)
+    → gatewayapi/ applied:
+        - Gateway API CRDs (kubernetes-sigs/gateway-api v1.4.0)
+        - agentgateway-crds HelmRelease
+        - agentgateway HelmRelease
+        - GatewayClass + Gateway
+    → preview/ applied:
+        - ResourceSetInputProvider polls GitHub PRs
+        - ResourceSet creates GitRepository + HelmRelease + HTTPRoute per PR
 ```
 
-### 5. Install Kind Load Balancer
+## Verify
 
 ```bash
-wget https://github.com/kubernetes-sigs/cloud-provider-kind/releases/download/v0.6.0/cloud-provider-kind_0.6.0_linux_amd64.tar.gz
-tar -xvzf cloud-provider-kind_0.6.0_linux_amd64.tar.gz -C /go/bin
-/go/bin/cloud-provider-kind >/dev/null 2>&1 &
-```
+# Check Flux resources
+flux get all
 
-### 6. Deploy Application Components
+# Check gateway
+kubectl get gateway,httproute -A
+kubectl get gatewayclass agentgateway
 
-```bash
-# Deploy release configuration
-k apply -f ../release
-
-# Deploy preview configuration
-k apply -f ../preview
-
-# Create GitHub authentication secret in preview namespace
-kubectl create secret generic github-auth \
-  --from-literal=username=git \
-  --from-literal=password=${GITHUB_TOKEN} \
-  -n app-preview
-```
-
-### 7. Verify Deployment
-
-To verify the deployment, you can check the LoadBalancer IP and test the endpoints:
-
-```bash
 # Get LoadBalancer IP
-LB_IP=$(kubectl get svc -o jsonpath='{.items[?(@.metadata.name matches "envoy-envoy-gateway.*")].status.loadBalancer.ingress[0].ip}' -n envoy-gateway-system)
+kubectl get svc -n agentgateway-system
 
-# Test the main endpoint
+# Test
 curl $LB_IP -HHost:kbot.example.com
-
-# Test preview endpoint
 curl $LB_IP/pr-40 -HHost:kbot.example.com
 ```
-
-## Next Steps
-
-After successful deployment:
-1. Create Pull Request
-```
-# Test preview endpoint
-# Note: use your PR number e.g. 40
-curl $LB_IP/pr-40 -HHost:kbot.example.com
-```
-2. Merge your Pull Request
-3. Create a Release
-```
-# Test release endpoint
-curl $LB_IP -HHost:kbot.example.com
-```
-## Notes
-
-- Make sure to keep your GitHub token secure
-- Ensure all prerequisites are installed before starting the setup
-- Check service status using `kubectl get svc` if you encounter any issues
