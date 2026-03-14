@@ -33,7 +33,11 @@ cd bootstrap
 tofu init
 log "tofu init done"
 
-log "Running tofu apply..."
+log "Running tofu apply (cluster + flux)..."
+tofu apply -auto-approve -target=kind_cluster.this -target=helm_release.flux_operator -target=helm_release.flux_instance
+log "tofu apply (cluster + flux) done"
+
+log "Running tofu apply (flux config)..."
 tofu apply -auto-approve
 log "tofu apply done"
 
