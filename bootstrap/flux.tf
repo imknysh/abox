@@ -23,6 +23,6 @@ resource "helm_release" "flux_instance" {
   chart      = "flux-instance"
   set {
     name  = "distribution.version"
-    value = "=2.5.x"
+    value = "=2.x"
   }
 }
