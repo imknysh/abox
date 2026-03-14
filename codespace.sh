@@ -49,12 +49,11 @@ rm /tmp/cloud-provider-kind.tar.gz
 nohup cloud-provider-kind > /tmp/cloud-provider-kind.log 2>&1 &
 log "cloud-provider-kind started (pid $!)"
 
-# Wait for Gateway API CRDs then apply GatewayClass + Gateway
-log "Waiting for Gateway API CRDs..."
-until kubectl get crd gateways.gateway.networking.k8s.io >/dev/null 2>&1; do
-  log "  not ready yet, retrying in 5s..."
-  sleep 5
-done
+# Install Gateway API CRDs
+log "Installing Gateway API CRDs..."
+kubectl apply --server-side -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.4.0/standard-install.yaml
+
+# Apply GatewayClass + Gateway
 log "Applying gatewayapi/Gateway.yaml..."
 kubectl apply -f gatewayapi/Gateway.yaml
 
