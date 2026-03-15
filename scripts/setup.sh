@@ -52,13 +52,4 @@ nohup /tmp/cloud-provider-kind > /tmp/cloud-provider-kind.log 2>&1 &
 log "cloud-provider-kind started (pid $!)"
 
 
-# Create kagent OpenAI secret
-log "Creating kagent-openai secret..."
-kubectl create namespace kagent --dry-run=client -o yaml | kubectl apply -f -
-kubectl create secret generic kagent-openai \
-  --from-literal=OPENAI_API_KEY="${OPENAI_API_KEY:-}" \
-  --namespace kagent \
-  --dry-run=client -o yaml | kubectl apply -f -
-log "kagent-openai secret created"
-
 log "=== setup complete ==="
