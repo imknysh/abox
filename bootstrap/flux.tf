@@ -77,7 +77,7 @@ resource "kubectl_manifest" "rset" {
           name: releases
           namespace: flux-system
         spec:
-          interval: 5m
+          interval: 2m
           url: ${var.oci_registry}/releases
           ref:
             tag: "<< inputs.tag >>"
@@ -87,7 +87,7 @@ resource "kubectl_manifest" "rset" {
           name: releases-crds
           namespace: flux-system
         spec:
-          interval: 5m
+          interval: 2m
           sourceRef:
             kind: OCIRepository
             name: releases
@@ -100,7 +100,7 @@ resource "kubectl_manifest" "rset" {
           name: releases
           namespace: flux-system
         spec:
-          interval: 5m
+          interval: 2m
           dependsOn:
             - name: releases-crds
           sourceRef:
