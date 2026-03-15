@@ -22,6 +22,15 @@ metadata:
 spec:
   interval: 1h
   releaseName: kagent
+  postRenderers:
+  - kustomize:
+      patches:
+      - patch: |
+          - op: add
+            path: /metadata/labels/app.kubernetes.io~1version
+            value: "0.7.23"
+        target:
+          labelSelector: app.kubernetes.io/name=kagent
   dependsOn:
     - name: kagent-crds
       namespace: kagent
