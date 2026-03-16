@@ -1,14 +1,18 @@
 # abox
 
-Local Kubernetes environment using KinD, Flux CD, and agentgateway. Gitless GitOps via OCI artifacts.
+> One command. Full AI infrastructure.
 
-## Stack
+`make run` gives you a local Kubernetes cluster with everything an AI project needs: an AI-aware API gateway, an agent runtime, observability, distributed tracing, and an eval harness — ready to use.
 
-- **KinD** — local Kubernetes cluster (1 control-plane + 2 workers)
-- **Flux CD 2.x** — GitOps operator (Flux Operator + FluxInstance)
-- **agentgateway v2.2.1** — Kubernetes Gateway API implementation
-- **kagent** — AI agent framework
-- **cloud-provider-kind** — LoadBalancer support for KinD
+## What's included
+
+| Component | Role |
+|---|---|
+| **agentgateway v2.2.1** | AI-aware API gateway (Gateway API–native, MCP-aware) |
+| **kagent** | Kubernetes-native AI agent framework |
+| **Flux CD 2.x** | GitOps/GitLessOps operator — keeps the cluster in sync with OCI artifacts |
+| **KinD** | Local Kubernetes (1 control-plane + 2 workers) - can be any k8s |
+| **cloud-provider-kind** | LoadBalancer support so gateway gets a real IP for local development |
 
 ## Quickstart
 
@@ -16,7 +20,15 @@ Local Kubernetes environment using KinD, Flux CD, and agentgateway. Gitless GitO
 make run
 ```
 
-Installs OpenTofu and K9s, provisions the KinD cluster, bootstraps Flux, starts cloud-provider-kind.
+That's it. Installs OpenTofu and k9s, provisions the cluster, bootstraps Flux, and reconciles all components. When it finishes:
+
+```bash
+kubectl get gateway,httproute -A        # gateway is up
+kubectl get agents -n kagent            # agent runtime is up
+kubectl get svc -n agentgateway-system  # grab the LoadBalancer IP
+```
+
+Point your AI app at the gateway IP on port 80.
 
 ## How it works
 
@@ -24,53 +36,46 @@ Installs OpenTofu and K9s, provisions the KinD cluster, bootstraps Flux, starts 
 make run  →  scripts/setup.sh
   → tofu apply (bootstrap/)
       → KinD cluster
-      → helm: flux-operator
-      → helm: flux-instance        (wait=true)
-      → kubectl_manifest: RSIP     (depends_on flux-instance)
-          polls oci://ghcr.io/den-vasyliev/abox/releases
-          filter: semver tags only  ^\d+\.\d+\.\d+$
-      → kubectl_manifest: ResourceSet  (depends_on RSIP)
-          creates OCIRepository + 2 Kustomizations per tag
-              → releases/crds/ reconciled first:
-                  gateway-api-crds.yaml   → gateway-api-crds HelmRelease
-                  agentgateway-crds.yaml  → agentgateway-crds HelmRelease
-                  kagent-crds.yaml        → kagent-crds HelmRelease
-              → releases/ reconciled after crds:
-                  agentgateway.yaml  → agentgateway HelmRelease + Gateway
-                  kagent.yaml        → kagent HelmRelease + HTTPRoute
+      → Flux Operator + FluxInstance
+      → ResourceSetInputProvider   polls oci://ghcr.io/den-vasyliev/abox/releases
+      → ResourceSet                creates OCIRepository + 2 Kustomizations
+          → releases/crds/    gateway-api-crds, agentgateway-crds, kagent-crds
+          → releases/         agentgateway (Gateway + GatewayClass)
+                              kagent (agent runtime + HTTPRoute)
 ```
+
+Everything after the cluster is **gitless GitOps via OCI**: no Git polling, no deploy keys. CI publishes `releases/` as an OCI artifact on every version tag. The cluster reconciles from that artifact automatically.
 
 ## Releasing
 
 ```bash
-make push
+make push   # bumps patch version, tags, pushes → CI publishes OCI artifact → cluster reconciles
 ```
 
-Bumps patch version, tags, and pushes to trigger CI. The CI workflow publishes `releases/` as an OCI artifact. RSIP picks it up and Flux reconciles automatically.
+> **Note:** RSIP tag sorting is lexicographic. If the patch version would exceed 9, bump the minor instead: `git tag vX.Y+1.0`.
 
-## Directory Layout
+## Directory layout
 
 | Path | Purpose |
-|------|---------|
-| `bootstrap/` | OpenTofu: KinD cluster + Flux bootstrap (operator, instance, RSIP, ResourceSet) |
-| `releases/crds/` | CRDs: gateway-api, agentgateway, kagent |
-| `releases/` | agentgateway + kagent Flux manifests |
-| `scripts/setup.sh` | Full setup script (called by `make run`) |
-| `.github/workflows/flux-push.yaml` | CI: push `releases/` as OCI artifact on `v*` tags |
+|---|---|
+| `bootstrap/` | OpenTofu: KinD + Flux bootstrap (operator, instance, RSIP, ResourceSet) |
+| `releases/crds/` | CRD HelmReleases: gateway-api, agentgateway, kagent |
+| `releases/` | App HelmReleases + Gateway + HTTPRoutes |
+| `scripts/setup.sh` | Full setup script (`make run`) |
+| `.github/workflows/flux-push.yaml` | CI: publish `releases/` as OCI artifact on `v*` tags |
 
-## Verify
+## Adding components
 
-```bash
-# Flux resources
-flux get all
+1. Put CRD charts in `releases/crds/` as HelmReleases.
+2. Put app charts in `releases/` as HelmReleases.
+3. Run `make push` — the cluster reconciles automatically.
 
-# Gateway
-kubectl get gateway,httproute -A
-kubectl get gatewayclass agentgateway
+The CRD kustomization runs first (`wait: true`), apps run after (`dependsOn: releases-crds`). This ordering is enforced by Flux and must be preserved.
 
-# LoadBalancer IP
-kubectl get svc -n agentgateway-system
+## Contributing
 
-# kagent
-kubectl get agents -n kagent
-```
+See [CONTRIBUTING.md](./CONTRIBUTING.md).
+
+## License
+
+Apache 2.0 — see [LICENSE](./LICENSE).
