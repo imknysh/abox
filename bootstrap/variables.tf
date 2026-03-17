@@ -15,3 +15,18 @@ variable "releases_version" {
   type        = string
   default     = "0.1.0"
 }
+
+variable "google_api_key" {
+  default = ""
+  description = "Gemini API Key"
+}
+
+variable "openai_api_key" {
+  default = ""
+  description = "OpenAI API Key"
+}
+
+variable "bedrock_api_key" {
+  default = ""
+  description = "Bedrock API Key"
+}
