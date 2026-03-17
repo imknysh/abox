@@ -16,6 +16,11 @@
 
 ## Quickstart
 
+Add envrionment variabel with API keys:
+TF_VAR_BEDROCK_API_KEY=<YOUR AWS Bedrock API Key>
+TF_VAR_GOOGLE_API_KEY=<YOUR Gemini API Key>
+TF_VAR_OPENAI_API_KEY=<YOUR OpenAI API Key>
+
 ```bash
 make run
 ```
