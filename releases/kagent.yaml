@@ -70,6 +70,7 @@ spec:
         apiKeySecretRef: ai-providers-api-keys
       gemini:
         apiKeySecretRef: ai-providers-api-keys
+        model: gemini-2.5-flash
       anthropic:
         apiKeySecretRef: ai-providers-api-keys              
 ---
