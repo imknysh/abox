@@ -1,4 +1,4 @@
-resource "kubectl_manifest" "test" {
+resource "kubectl_manifest" "ai_api_keys" {
     depends_on = [kind_cluster.this]
 
     yaml_body = <<YAML
