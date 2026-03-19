@@ -1,0 +1,33 @@
+"""Example echo tool for my-mcp-server MCP server.
+
+This is an example tool showing the basic structure for FastMCP tools.
+Each tool file should contain a function decorated with @mcp.tool().
+"""
+
+from mcp.types import ToolAnnotations
+
+from core.server import mcp
+from core.utils import get_tool_config
+
+
+@mcp.tool(
+    annotations=ToolAnnotations(
+        title="Echo Message",
+        readOnlyHint=True,
+    ),
+)
+def echo(message: str) -> str:
+    """Echo a message back to the client.
+
+    Args:
+        message: The message to echo
+
+    Returns:
+        The echoed message with any configured prefix
+    """
+    # Get tool-specific configuration
+    config = get_tool_config("echo")
+    prefix = config.get("prefix", "")
+
+    # Return the message with optional prefix
+    return f"{prefix}{message}" if prefix else message

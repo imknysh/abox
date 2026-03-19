@@ -1,0 +1,12 @@
+apiVersion: kagent.dev/v1alpha1
+kind: MCPServer
+metadata:
+  name: my-mcp-server
+  namespace: kagent
+spec:
+  deployment:
+    image: "ghcr.io/imknysh/abox-my-mcp-server:latest"
+    port: 3000
+    cmd: "python"
+    args: ["src/main.py"]
+  transportType: "stdio"

@@ -6,3 +6,4 @@ resources:
   - kagent.yaml
   - kubernetes-replicator.yaml
   - agents.yaml
+  - mcps.yaml
