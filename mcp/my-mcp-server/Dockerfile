@@ -1,5 +1,5 @@
 # Multi-stage build for my-mcp-server MCP server using uv
-FROM python:3.12-slim as builder
+FROM python:3.11-slim as builder
 
 # Install uv
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
@@ -23,9 +23,10 @@ RUN if [ -f uv.lock ]; then \
 
 # Copy source code
 COPY src/ ./src/
+COPY kmcp.yaml ./
 
 # Production stage
-FROM python:3.12-slim
+FROM python:3.11-slim
 
 # Install uv in production
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
@@ -39,6 +40,7 @@ WORKDIR /app
 # Copy virtual environment and application from builder
 COPY --from=builder /app/.venv /app/.venv
 COPY --from=builder /app/src /app/src
+COPY --from=builder /app/kmcp.yaml /app/kmcp.yaml
 COPY --from=builder /app/pyproject.toml /app/pyproject.toml
 
 # Make sure scripts in .venv are usable
