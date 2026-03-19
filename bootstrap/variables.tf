@@ -10,6 +10,12 @@ variable "oci_registry" {
   default     = "oci://ghcr.io/imknysh/abox"
 }
 
+variable "git_repository" {
+  description = "Git repository"
+  type        = string
+  default     = "https://github.com/imknysh/abox"
+}
+
 variable "releases_version" {
   description = "Default tag for releases OCI artifact bootstrap"
   type        = string

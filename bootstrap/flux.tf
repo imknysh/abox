@@ -32,6 +32,28 @@ resource "helm_release" "flux_instance" {
 # ==========================================
 # Bootstrap Flux ResourceSetInputProvider
 # ==========================================
+#resource "kubectl_manifest" "rsip" {
+#  depends_on = [helm_release.flux_instance]
+#
+#  yaml_body = <<-YAML
+#    apiVersion: fluxcd.controlplane.io/v1
+#    kind: ResourceSetInputProvider
+#    metadata:
+#      name: releases-image
+#      namespace: flux-system
+#      annotations:
+#        fluxcd.controlplane.io/reconcileEvery: 5m
+#    spec:
+#      type: OCIArtifactTag
+#      url: ${var.oci_registry}/releases
+#      filter:
+#        includeTag: "^\\d+\\.\\d+\\.\\d+$"
+#        limit: 1
+#      defaultValues:
+#        tag: "${var.releases_version}"
+#  YAML
+#}
+
 resource "kubectl_manifest" "rsip" {
   depends_on = [helm_release.flux_instance]
 
@@ -44,13 +66,15 @@ resource "kubectl_manifest" "rsip" {
       annotations:
         fluxcd.controlplane.io/reconcileEvery: 5m
     spec:
-      type: OCIArtifactTag
-      url: ${var.oci_registry}/releases
+      schedule:
+        - cron: "0 8 * * 1-5"
+          timeZone: "Europe/London"
+          window: 3h
+      type: GitHubTag
+      url: ${var.git_repository}
       filter:
-        includeTag: "^\\d+\\.\\d+\\.\\d+$"
-        limit: 1
-      defaultValues:
-        tag: "${var.releases_version}"
+        semver: ">=0.6.5"
+        limit: 1     
   YAML
 }
 
@@ -72,13 +96,13 @@ resource "kubectl_manifest" "rset" {
         name: releases-image
       resources:
       - apiVersion: source.toolkit.fluxcd.io/v1
-        kind: OCIRepository
+        kind: GitRepository
         metadata:
           name: releases
           namespace: flux-system
         spec:
           interval: 2m
-          url: ${var.oci_registry}/releases
+          url: ${var.git_repository}
           ref:
             tag: "<< inputs.tag >>"
       - apiVersion: kustomize.toolkit.fluxcd.io/v1
@@ -89,7 +113,7 @@ resource "kubectl_manifest" "rset" {
         spec:
           interval: 2m
           sourceRef:
-            kind: OCIRepository
+            kind: GitRepository
             name: releases
           path: ./crds
           prune: true
@@ -104,7 +128,7 @@ resource "kubectl_manifest" "rset" {
           dependsOn:
             - name: releases-crds
           sourceRef:
-            kind: OCIRepository
+            kind: GitRepository
             name: releases
           path: ./
           prune: true
