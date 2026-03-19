@@ -10,6 +10,8 @@ on:
         description: 'Version of the server (format x.y.z)'
         required: false
         default: 'latest'
+env:
+  version: ${{ case(github.event.inputs.version != '', github.event.inputs.version, 'latest') }}
 
 jobs:
   build:
