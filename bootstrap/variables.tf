@@ -13,7 +13,7 @@ variable "oci_registry" {
 variable "git_repository" {
   description = "Git repository"
   type        = string
-  default     = "https://github.com/imknysh/abox.git"
+  default     = "https://github.com/imknysh/abox"
 }
 
 variable "releases_version" {
