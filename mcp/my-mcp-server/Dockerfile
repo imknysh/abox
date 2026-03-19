@@ -23,7 +23,6 @@ RUN if [ -f uv.lock ]; then \
 
 # Copy source code
 COPY src/ ./src/
-COPY kmcp.yaml ./
 
 # Production stage
 FROM python:3.11-slim
@@ -40,7 +39,6 @@ WORKDIR /app
 # Copy virtual environment and application from builder
 COPY --from=builder /app/.venv /app/.venv
 COPY --from=builder /app/src /app/src
-COPY --from=builder /app/kmcp.yaml /app/kmcp.yaml
 COPY --from=builder /app/pyproject.toml /app/pyproject.toml
 
 # Make sure scripts in .venv are usable
