@@ -2,7 +2,7 @@ apiVersion: kagent.dev/v1alpha1
 kind: MCPServer
 metadata:
   name: my-mcp-server
-  namespace: default
+  namespace: kagent
 spec:
   deployment:
     args:
