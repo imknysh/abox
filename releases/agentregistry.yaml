@@ -10,7 +10,7 @@ metadata:
   namespace: agentregistry
 spec:
   interval: 1h
-  url: ghcr.io/den-vasyliev/charts/agentregistry
+  url: oci://ghcr.io/den-vasyliev/charts/agentregistry
   ref:
     tag: "0.5.16"
 ---
