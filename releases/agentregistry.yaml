@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: agentregistry
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: OCIRepository
+metadata:
+  name: agentregistry
+  namespace: agentregistry
+spec:
+  interval: 1h
+  url: ghcr.io/den-vasyliev/charts/agentregistry
+  ref:
+    tag: "0.5.16"
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: agentregistry
+  namespace: agentregistry
+spec:
+  interval: 1h
+  releaseName: agentregistry
+  chartRef:
+    kind: OCIRepository
+    name: agentregistry
+    namespace: agentregistry
+  install:
+    createNamespace: true
