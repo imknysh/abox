@@ -10,7 +10,7 @@ metadata:
   namespace: mcp-governance
 spec:
   interval: 1h
-  url: oci:// ghcr.io/techwithhuz/charts/mcp-governance
+  url: oci://ghcr.io/techwithhuz/charts/mcp-governance
   ref:
     tag: "0.21.0"
 ---
