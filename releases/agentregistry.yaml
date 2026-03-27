@@ -28,3 +28,6 @@ spec:
     namespace: agentregistry
   install:
     createNamespace: true
+  values:
+    image:
+      tag: "latest"
