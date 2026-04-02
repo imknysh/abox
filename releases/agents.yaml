@@ -20,6 +20,7 @@ apiVersion: kagent.dev/v1alpha2
 kind: Agent
 metadata:
   name: rca-agent
+  namespace: kagent
 spec:
   description: AI-powered Root Cause Analysis agent
   type: BYO
