@@ -10,11 +10,11 @@ spec:
     deployment:
       image: ghcr.io/imknysh/triage-agent:latest
       env:
-        - name: GOOGLE_API_KEY
+        - name: LLM_API_KEY
           valueFrom:
             secretKeyRef:
               name: ai-providers-api-keys
-              key: GOOGLE_API_KEY
+              key: OPENAI_API_KEY
 ---
 apiVersion: kagent.dev/v1alpha2
 kind: Agent
